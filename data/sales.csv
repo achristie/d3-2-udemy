@@ -1,8 +1,8 @@
-Month,Sales
-January, 1000
-February, 1200
-March, 1100
-April,1500
-May,1900
-June,2250
-July,2500
+Month,Sales,Profit
+January, 1000,800
+February, 1200,900
+March, 1100,850
+April,1500,1250
+May,1900,1450
+June,2250,1922
+July,2500,2010
