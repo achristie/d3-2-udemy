@@ -23,7 +23,18 @@ const r = d3
   .scaleLinear()
   .range([25 * Math.PI, 1500 * Math.PI])
   .domain([0, 14e9]);
-const c = d3.scaleOrdinal(d3.schemeCategory10);
+const continents = ["europe", "asia", "americas", "africa"];
+const c = d3.scaleOrdinal(d3.schemeCategory10).domain(continents);
+
+// const tip = d3
+//   .tip()
+//   .attr("class", "d3-tip")
+//   .html((d) => {
+//     let text = `<strong> Country: </strong> <span style='color: red'>${d.country}</span>`;
+//     return text;
+//   });
+
+// g.call(tip);
 
 const xAxisGroup = g.append("g").attr("transform", `translate(0, ${height})`);
 const xAxis = (label) => (g) => g.call(d3.axisBottom(x).ticks(3, "~s"));
@@ -39,13 +50,36 @@ const timeLabel = g
   .attr("text-anchor", "middle")
   .text("1800");
 
+const legend = g
+  .append("g")
+  .attr("transform", `translate(${width - 10}, ${height - 125})`);
+
+continents.forEach((cont, i) => {
+  const legendRow = legend
+    .append("g")
+    .attr("transform", `translate(0, ${i * 20})`);
+
+  legendRow
+    .append("rect")
+    .attr("width", 10)
+    .attr("height", 10)
+    .attr("fill", c(cont));
+
+  legendRow
+    .append("text")
+    .attr("x", -10)
+    .attr("y", 10)
+    .attr("text-anchor", "end")
+    .style("text-transform", "capitalize")
+    .text(cont);
+});
+
 d3.json("data/data.json").then((data) => {
-  c.domain(data[0].countries.map((d) => d.continent));
   let i = 0;
   let int = d3.interval(() => {
     update(data[++i]);
     i = i == 214 ? 0 : i;
-  }, 1000);
+  }, 200);
 
   update(data[i]);
 });
@@ -57,11 +91,14 @@ function update(data) {
   const circle = g.selectAll("circle").data(data.countries, (d) => d.country);
   const t = d3.transition().duration(300);
 
-  circle.exit().attr("fill", "red").transition(t).remove();
+  circle.exit().remove();
+
   circle
     .enter()
     .append("circle")
     .attr("fill", (d) => c(d.continent))
+    // .on("mouseover", tip.show)
+    // .on("mouseout", tip.hide)
     .merge(circle)
     .transition(t)
     .attr("r", (d) => Math.sqrt(r(d?.population ?? 1) / Math.PI))
