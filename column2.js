@@ -17,53 +17,58 @@ const g = d3
   .append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-// function groupBy(array, key) {
-//   return array.reduce((result, cv) => {
-//     (result[cv[key]] = result[cv[key]] || []).push(cv);
-//     return result;
-//   }, {});
-// }
+const xAxisGroup = g.append("g").attr("transform", `translate(0, ${height})`);
+const yAxisGroup = g.append("g");
+
+const x = d3.scaleLinear().range([0, width]);
+
+const y = d3.scaleBand().paddingInner(0.2).range([0, height]);
+
+const year = g
+  .append("text")
+  .attr("x", width - 20)
+  .attr("y", height - 20)
+  .attr("text-anchor", "end");
 
 d3.json("data/data.json").then((data) => {
   // const groupedData = groupBy(data[200].countries, "continent");
-  const groupedData = Array.from(
-    d3.rollup(
-      data[200].countries,
-      (v) => d3.sum(v, (d) => d.population),
-      (d) => d.continent
-    )
-  ).map((arr) => ({ key: arr[0], value: arr[1] }));
-  console.log(groupedData);
+  let i = 0;
+  d3.interval(() => update(data[++i]), 2000);
 
-  const x = d3
-    .scaleLinear()
-    .domain([0, d3.max(groupedData, (d) => +d.value)])
-    .range([0, width]);
+  update(data[i]);
+});
 
-  const y = d3
-    .scaleBand()
-    .paddingInner(0.2)
-    .domain(groupedData.map((d) => d.key))
-    .range([0, height]);
+function update(data) {
+  const groupedData = d3.rollup(
+    data.countries,
+    (v) => d3.sum(v, (d) => d.population),
+    (d) => d.continent
+  );
 
-  const rect = g.selectAll("rect").data(groupedData);
+  const t = d3.transition(200);
+  const rect = g
+    .selectAll("rect")
+    .data(groupedData, (d) => ["europe", "africa", "americas", "asia"]);
 
-  rect
-    .enter()
-    .append("rect")
-    .attr("fill", "cyan")
-    .attr("x", 0)
-    .attr("y", (d) => y(d.key))
-    .attr("width", (d) => x(d.value))
-    .attr("height", y.bandwidth());
-
-  const xAxisGroup = g.append("g").attr("transform", `translate(0, ${height})`);
-  const yAxisGroup = g.append("g");
+  x.domain([0, d3.max(groupedData, (d) => d[1])]);
+  y.domain(groupedData.keys());
 
   const xAxis = d3.axisBottom(x);
   const yAxis = d3.axisLeft(y);
 
   xAxisGroup.call(xAxis);
   yAxisGroup.call(yAxis);
-});
+
+  rect.join(
+    (enter) =>
+      enter
+        .append("rect")
+        .attr("fill", "green")
+        .attr("x", 0)
+        .attr("height", y.bandwidth()),
+    (update) => update.attr("y", (d) => y(d[0])).attr("width", (d) => x(d[1]))
+  );
+
+  year.text(data.year);
+}
 
