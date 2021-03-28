@@ -33,27 +33,31 @@ const year = g
 d3.json("data/data.json").then((data) => {
   // const groupedData = groupBy(data[200].countries, "continent");
   let i = 0;
-  d3.interval(() => update(data[++i]), 2000);
+  d3.interval(() => update(data[++i]), 300);
 
   update(data[i]);
 });
 
 function update(data) {
-  const groupedData = d3.rollup(
-    data.countries,
-    (v) => d3.sum(v, (d) => d.population),
-    (d) => d.continent
-  );
+  const groupedData = d3
+    .rollups(
+      data.countries,
+      (v) => d3.sum(v, (d) => d.population),
+      (d) => d.continent
+    )
+    .sort((a, b) => d3.descending(a[1], b[1]));
 
-  const t = d3.transition(200);
-  const rect = g
-    .selectAll("rect")
-    .data(groupedData, (d) => ["europe", "africa", "americas", "asia"]);
+  console.log(groupedData);
+
+  const t = d3.transition(100);
+  const rect = g.selectAll("rect").data(groupedData, function (d) {
+    return d[0];
+  });
 
   x.domain([0, d3.max(groupedData, (d) => d[1])]);
-  y.domain(groupedData.keys());
+  y.domain(groupedData.map((d) => d[0]));
 
-  const xAxis = d3.axisBottom(x);
+  const xAxis = d3.axisBottom(x).ticks(4, "~s");
   const yAxis = d3.axisLeft(y);
 
   xAxisGroup.call(xAxis);
@@ -65,8 +69,15 @@ function update(data) {
         .append("rect")
         .attr("fill", "green")
         .attr("x", 0)
-        .attr("height", y.bandwidth()),
-    (update) => update.attr("y", (d) => y(d[0])).attr("width", (d) => x(d[1]))
+        .attr("height", y.bandwidth())
+        .attr("width", (d) => x(d[1]))
+        .attr("y", (d) => y(d[0])),
+    (update) =>
+      update
+        .call((update) => update.transition(t))
+        .attr("y", (d) => y(d[0]))
+        .attr("height", y.bandwidth())
+        .attr("width", (d) => x(d[1]))
   );
 
   year.text(data.year);
