@@ -18,29 +18,41 @@ const g = d3
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
 d3.csv("./data/sales.csv").then((data) => {
-  console.log(data);
+  data = data.flatMap((d) => [
+    { metric: "Sales", value: +d.Sales, month: d.Month },
+    { metric: "Profit", value: +d.Profit, month: d.Month },
+  ]);
+
+  const groups = d3.groups(data, (d) => d.metric);
 
   const x = d3
     .scaleBand()
-    .domain(data.map((d) => d.Month))
+    .domain(data.map((d) => d.month))
     .range([0, width]);
   const y = d3
     .scaleLinear()
-    .domain(d3.extent(data, (d) => d.Sales))
+    .domain(d3.extent(data, (d) => d.value))
     .range([height, 0]);
+
+  const color = d3
+    .scaleOrdinal(d3.schemeCategory10)
+    .domain(data.map((d) => d.metric));
 
   const line = d3
     .line()
-    .x((d) => x(d.Month))
-    .y((d) => y(d.Sales));
+    .x((d) => x(d.month))
+    .y((d) => y(d.value));
 
-  const line2 = d3
-    .line()
-    .x((d) => x(d.Month))
-    .y((d) => y(d.Profit));
+  const path = g.selectAll("path").data(groups);
+  const t = d3.transition(2500);
 
-  g.append("path").datum(data).attr("class", "line").attr("d", line);
-  g.append("path").datum(data).attr("class", "line").attr("d", line2);
+  path
+    .join("path")
+    .attr("class", "line")
+    .attr("stroke", (d) => console.log(d))
+    .attr("stroke", (d) => color(d[0]))
+    .transition(t)
+    .attr("d", (d) => line(d[1]));
 
   const circle = g.selectAll("circle").data(data);
 
@@ -48,8 +60,9 @@ d3.csv("./data/sales.csv").then((data) => {
     .enter()
     .append("circle")
     .attr("class", "dot")
-    .attr("cx", (d) => x(d.Month))
-    .attr("cy", (d) => y(d.Sales))
+    .attr("fill", (d) => color(d.metric))
+    .attr("cx", (d) => x(d.month))
+    .attr("cy", (d) => y(d.value))
     .attr("r", 5);
 });
 
