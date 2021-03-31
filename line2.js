@@ -46,6 +46,15 @@ d3.csv("./data/sales.csv").then((data) => {
   const path = g.selectAll("path").data(groups);
   const t = d3.transition(2500);
 
+  const xAxis = d3.axisBottom(x);
+  const yAxis = d3.axisLeft(y);
+
+  const xAxisGroup = g.append("g").attr("transform", `translate(0, ${height})`);
+  const yAxisGroup = g.append("g");
+
+  xAxisGroup.call(xAxis);
+  yAxisGroup.call(yAxis);
+
   path
     .join("path")
     .attr("class", "line")
