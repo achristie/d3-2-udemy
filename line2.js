@@ -17,6 +17,19 @@ const g = d3
   .append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
+const profitButton = d3.select("#profit");
+const salesButton = d3.select("#sales");
+let showProfit = true,
+  showSales = true;
+
+profitButton.on("click", () => {
+  showProfit = !showProfit;
+});
+
+salesButton.on("click", () => {
+  showSales = !showSales;
+});
+
 d3.csv("./data/sales.csv").then((data) => {
   data = data.flatMap((d) => [
     { metric: "Sales", value: +d.Sales, month: d.Month },
