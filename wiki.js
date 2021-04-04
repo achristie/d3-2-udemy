@@ -16,6 +16,27 @@ const g = d3
   .append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
+function generateDataset(data) {
+  const months = [
+    "01",
+    "02",
+    "03",
+    "04",
+    "05",
+    "06",
+    "07",
+    "08",
+    "09",
+    "10",
+    "11",
+    "12",
+  ];
+  const years = data.map((d) => d[0]);
+  const cross = d3.cross(years, months);
+  const dataset = d3.groups(cross, (d) => d[0]);
+  return [cross, dataset];
+}
+
 d3.json("./data/data.json").then((data) => {
   const fmt = d3.timeFormat("%Y %m");
   data.forEach((d) => (d.timestamp = fmt(new Date(d.timestamp))));
@@ -30,10 +51,12 @@ d3.json("./data/data.json").then((data) => {
     (d) => d.timestamp.split(" ")[0],
     (d) => d.timestamp.split(" ")[1]
   );
-  console.log(group);
+
+  const [cross, dataset] = generateDataset(group);
+
   const x = d3
     .scaleBand()
-    .domain(data.map((d) => d.timestamp))
+    .domain(cross.map((d) => `${d[0]} ${d[1]}`))
     .range([0, width]);
 
   const y = d3
@@ -52,7 +75,6 @@ d3.json("./data/data.json").then((data) => {
     .data(group)
     .join("g")
     .attr("class", "year");
-  // .attr("transform", (d) => `translate(${year_scale(+d[0])} 0)`);
 
   years
     .selectAll("rect")
@@ -88,19 +110,15 @@ d3.json("./data/data.json").then((data) => {
       .attr("fill", "#999")
       .attr("font-size", 14);
   };
-  // const xAxis = d3.axisBottom(year_scale);
   const xAxisGroup = g
     .append("g")
     .attr("transform", `translate(0, ${height + 20})`);
 
   xAxisGroup.call(xAxis_year);
 
-  // const rect = g.selectAll("rect").data(rollup);
-  // rect
-  //   .join("rect")
-  //   .attr("y", (d) => y(d[1]))
-  //   .attr("height", (d) => height - y(d[1]))
-  //   .attr("fill", "green")
-  //   .attr("");
+  const yAxis = d3.axisLeft(y).tickWidth(0);
+  const yAxisGroup = g.append("g");
+
+  yAxisGroup.call(yAxis);
 });
 
