@@ -56,6 +56,7 @@ d3.json("./data/data.json").then((data) => {
 
   const x = d3
     .scaleBand()
+    .paddingInner(0.1)
     .domain(cross.map((d) => `${d[0]} ${d[1]}`))
     .range([0, width]);
 
@@ -69,22 +70,6 @@ d3.json("./data/data.json").then((data) => {
     .domain(group.map((d) => +d[0]))
     .padding(0)
     .range([0, width]);
-
-  const years = g
-    .selectAll(".years")
-    .data(group)
-    .join("g")
-    .attr("class", "year");
-
-  years
-    .selectAll("rect")
-    .data((d) => d[1])
-    .join("rect")
-    .attr("fill", (d) => "cyan")
-    .attr("width", x.bandwidth())
-    .attr("x", (d, i) => x(d[1][0].timestamp))
-    .attr("y", (d) => y(d[1].length))
-    .attr("height", (d) => height - y(d[1].length));
 
   xAxis_year = (g) => {
     const group = g
@@ -116,9 +101,37 @@ d3.json("./data/data.json").then((data) => {
 
   xAxisGroup.call(xAxis_year);
 
-  const yAxis = d3.axisLeft(y).tickWidth(0);
+  const yAxis = d3.axisLeft(y).tickSizeOuter(0).tickSizeInner(0);
   const yAxisGroup = g.append("g");
 
-  yAxisGroup.call(yAxis);
+  yAxisGroup
+    .call(yAxis)
+    .call((g) =>
+      g
+        .selectAll(".tick line")
+        .attr("x1", width)
+        .attr("stroke-dasharray", "2,2")
+        .attr("stroke", "silver")
+    )
+    .call((g) => g.select(".domain").remove())
+    .call((g) =>
+      g.selectAll(".tick text").attr("fill", "#999").attr("font-size", 12)
+    );
+
+  const years = g
+    .selectAll(".years")
+    .data(group)
+    .join("g")
+    .attr("class", "year");
+
+  years
+    .selectAll("rect")
+    .data((d) => d[1])
+    .join("rect")
+    .attr("fill", (d) => "cyan")
+    .attr("width", x.bandwidth())
+    .attr("x", (d, i) => x(d[1][0].timestamp))
+    .attr("y", (d) => y(d[1].length))
+    .attr("height", (d) => height - y(d[1].length));
 });
 
