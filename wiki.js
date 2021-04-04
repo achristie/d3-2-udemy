@@ -56,10 +56,11 @@ d3.json("./data/data.json").then((data) => {
 
   const x = d3
     .scaleBand()
-    .paddingInner(0.1)
+    .paddingInner(0.2)
     .domain(cross.map((d) => `${d[0]} ${d[1]}`))
     .range([0, width]);
 
+  const color = d3.scaleOrdinal().range(["cyan", "cornflowerblue"]);
   const y = d3
     .scaleLinear()
     .domain([0, d3.max(rollup, (d) => +d[1])])
@@ -124,11 +125,12 @@ d3.json("./data/data.json").then((data) => {
     .join("g")
     .attr("class", "year");
 
+  console.log(color);
   years
     .selectAll("rect")
     .data((d) => d[1])
     .join("rect")
-    .attr("fill", (d) => "cyan")
+    .attr("fill", (d) => color(d[1][0].timestamp.split(" ")[0]))
     .attr("width", x.bandwidth())
     .attr("x", (d, i) => x(d[1][0].timestamp))
     .attr("y", (d) => y(d[1].length))
